@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'os'
 import { join } from 'path'
+import managerAdds from './add'
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration()
@@ -26,7 +27,7 @@ let win: BrowserWindow | null = null
 // Here, you can also use other preload
 const preload = join(__dirname, '../preload/index.js')
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin
-const url = process.env.VITE_DEV_SERVER_URL as string;
+const url = process.env.VITE_DEV_SERVER_URL as string
 const indexHtml = join(ROOT_PATH.dist, 'index.html')
 
 async function createWindow() {
@@ -47,6 +48,10 @@ async function createWindow() {
     // win.webContents.openDevTools()
   }
 
+  // 开启控制台
+  const contents = win.webContents
+  contents.toggleDevTools()
+
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
@@ -59,7 +64,13 @@ async function createWindow() {
   })
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  /**
+   * 进程通信方法集合
+   */
+  managerAdds()
+  createWindow()
+})
 
 app.on('window-all-closed', () => {
   win = null
